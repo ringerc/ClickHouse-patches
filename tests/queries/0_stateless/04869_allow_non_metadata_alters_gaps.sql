@@ -132,10 +132,12 @@ SELECT 'ok';
 -- ---------------------------------------------------------------------------
 
 -- Lightweight DELETE / UPDATE default to refusing tables that have projections
--- (`lightweight_mutation_projection_mode = 'throw'`). Allow the drop behavior
--- for this test since the goal is to exercise the mutation path, not the
--- projection interaction.
-SET lightweight_mutation_projection_mode = 'drop';
+-- (`lightweight_mutation_projection_mode = 'throw'` is a MergeTree table-level
+-- setting). Drop the projection first so the lightweight path itself is what
+-- gets exercised.
+SET allow_non_metadata_alters = 1;
+ALTER TABLE ana_gaps DROP PROJECTION proj_v_num;
+SET allow_non_metadata_alters = 0;
 
 SELECT '-- gap: lightweight DELETE FROM ... WHERE';
 DELETE FROM ana_gaps WHERE key = 999;
