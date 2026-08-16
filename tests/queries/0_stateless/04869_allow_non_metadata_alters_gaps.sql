@@ -69,6 +69,9 @@ SET materialize_ttl_after_modify = 1;
 ALTER TABLE ana_gaps MODIFY TTL v_d + INTERVAL 5 DAY; -- { serverError ALTER_OF_COLUMN_IS_FORBIDDEN }
 SET materialize_ttl_after_modify = 0;
 
+SELECT '-- positive: DROP COLUMN of MATERIALIZED column (has physical data)';
+ALTER TABLE ana_gaps DROP COLUMN v_mat; -- { serverError ALTER_OF_COLUMN_IS_FORBIDDEN }
+
 
 -- ---------------------------------------------------------------------------
 -- Negative assertions: the setting does NOT refuse these today. Pin the gap.
@@ -116,11 +119,6 @@ SELECT 'ok';
 
 SELECT '-- gap: APPLY DELETED MASK';
 ALTER TABLE ana_gaps APPLY DELETED MASK;
-SELECT 'ok';
-
-SELECT '-- gap: DROP COLUMN of MATERIALIZED column (metadata-only, not blocked)';
-SET allow_non_metadata_alters = 0;
-ALTER TABLE ana_gaps DROP COLUMN v_mat;
 SELECT 'ok';
 
 SELECT '-- gap: DROP COLUMN of ALIAS column (metadata-only, not blocked)';

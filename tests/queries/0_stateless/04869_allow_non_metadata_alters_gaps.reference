@@ -6,6 +6,7 @@
 -- positive: CLEAR INDEX IN PARTITION
 -- positive: DROP PROJECTION
 -- positive: MODIFY TTL (rewrite path)
+-- positive: DROP COLUMN of MATERIALIZED column (has physical data)
 -- gap: ALTER TABLE ... UPDATE (explicit heavy mutation)
 ok
 -- gap: ALTER TABLE ... DELETE (explicit heavy mutation)
@@ -19,8 +20,6 @@ ok
 -- gap: MATERIALIZE TTL
 ok
 -- gap: APPLY DELETED MASK
-ok
--- gap: DROP COLUMN of MATERIALIZED column (metadata-only, not blocked)
 ok
 -- gap: DROP COLUMN of ALIAS column (metadata-only, not blocked)
 ok

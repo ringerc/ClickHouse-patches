@@ -5423,7 +5423,7 @@ The check does NOT block:
 - Lightweight `DELETE FROM ... WHERE ...` and standalone `UPDATE ... SET ... WHERE ...`.
 - Partition manipulation (`ATTACH`/`DETACH`/`DROP`/`MOVE PARTITION`), `TRUNCATE`, and `SYSTEM ...` statements.
 - `MODIFY COLUMN` type changes that are metadata-only per `isMetadataOnlyConversion` (e.g. compatible Enum widening) — correctly, since no data is rewritten.
-- `DROP COLUMN` of a `MATERIALIZED` or `ALIAS` column — metadata-only, not a mutation.
+- `DROP COLUMN` of an `ALIAS` column — metadata-only (aliases are virtual). Note that `DROP COLUMN` of a `MATERIALIZED` column IS refused, since materialized columns hold physical data on disk.
 
 For stricter guardrails combine this with the server-level `disable_insertion_and_mutation` setting and RBAC on `ALTER`/`INSERT` grants.
 )", 0) \
