@@ -69,7 +69,6 @@ jobs:
           # provides it.
           python3 tests/clickhouse-test \
             --binary $(which clickhouse) \
-            --print-time \
             --no-random-settings \
             --no-random-merge-tree-settings \
             --queries tests/queries \
