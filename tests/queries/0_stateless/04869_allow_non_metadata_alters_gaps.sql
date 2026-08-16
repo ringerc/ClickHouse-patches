@@ -131,6 +131,12 @@ SELECT 'ok';
 -- Both are enabled by default (enable_lightweight_update = 1).
 -- ---------------------------------------------------------------------------
 
+-- Lightweight DELETE / UPDATE default to refusing tables that have projections
+-- (`lightweight_mutation_projection_mode = 'throw'`). Allow the drop behavior
+-- for this test since the goal is to exercise the mutation path, not the
+-- projection interaction.
+SET lightweight_mutation_projection_mode = 'drop';
+
 SELECT '-- gap: lightweight DELETE FROM ... WHERE';
 DELETE FROM ana_gaps WHERE key = 999;
 SELECT 'ok';
