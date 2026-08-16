@@ -87,16 +87,12 @@ ALTER TABLE ana_gaps DELETE WHERE key = 999;
 SELECT 'ok';
 
 SELECT '-- gap: MATERIALIZE INDEX';
-SET allow_non_metadata_alters = 1;
-ALTER TABLE ana_gaps ADD INDEX idx_v_num v_num TYPE minmax GRANULARITY 1;
-SET allow_non_metadata_alters = 0;
+-- idx_v_num was added earlier and its DROP was refused, so it still exists.
 ALTER TABLE ana_gaps MATERIALIZE INDEX idx_v_num;
 SELECT 'ok';
 
 SELECT '-- gap: MATERIALIZE PROJECTION';
-SET allow_non_metadata_alters = 1;
-ALTER TABLE ana_gaps ADD PROJECTION proj_v_num (SELECT v_num ORDER BY v_num);
-SET allow_non_metadata_alters = 0;
+-- proj_v_num was added earlier and its DROP was refused, so it still exists.
 ALTER TABLE ana_gaps MATERIALIZE PROJECTION proj_v_num;
 SELECT 'ok';
 
