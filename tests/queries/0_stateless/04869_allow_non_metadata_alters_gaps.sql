@@ -104,6 +104,13 @@ ALTER TABLE ana_gaps MATERIALIZE COLUMN v_backfill;
 SELECT 'ok';
 
 SELECT '-- gap: MATERIALIZE TTL';
+-- Need a TTL to materialize. Setting it requires a metadata-only path
+-- (materialize_ttl_after_modify = 0 keeps MODIFY TTL from being routed as a
+-- data-rewrite mutation).
+SET allow_non_metadata_alters = 1;
+SET materialize_ttl_after_modify = 0;
+ALTER TABLE ana_gaps MODIFY TTL v_d + INTERVAL 5 DAY;
+SET allow_non_metadata_alters = 0;
 ALTER TABLE ana_gaps MATERIALIZE TTL;
 SELECT 'ok';
 
