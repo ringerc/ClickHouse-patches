@@ -5408,7 +5408,24 @@ Defines how MySQL types are converted to corresponding ClickHouse types. A comma
 Optimize trivial 'INSERT INTO table SELECT ... FROM TABLES' query
 )", 0) \
     DECLARE(Bool, allow_non_metadata_alters, true, R"(
-Allow to execute alters which affects not only tables metadata, but also data on disk
+Allow to execute alters which affects not only tables metadata, but also data on disk.
+
+When set to `0`, `ALTER` statements that would rewrite data on disk are rejected with error code `ALTER_OF_COLUMN_IS_FORBIDDEN`.
+
+The check has a narrow scope — treat it as one layer of defense, not a full mutation guard. It only fires for:
+
+- Tables in the `MergeTree` family (the check lives in `MergeTreeData::checkAlterIsPossible`); other engines bypass it.
+- `ALTER` commands that convert to mutations through `AlterCommands::getMutationCommands` with `with_alters = false`. Typical examples: `DROP COLUMN` (physical), non-metadata `MODIFY COLUMN`, `RENAME COLUMN`, `DROP INDEX`/`PROJECTION`/`STATISTICS`, `CLEAR COLUMN`/`INDEX IN PARTITION`, and `MODIFY TTL` when it forces a rewrite.
+
+The check does NOT block:
+
+- Explicit mutations: `ALTER TABLE ... UPDATE`, `ALTER TABLE ... DELETE`, `ALTER TABLE ... MATERIALIZE INDEX`/`PROJECTION`/`COLUMN`/`STATISTICS`/`TTL`, `ALTER TABLE ... APPLY DELETED MASK`/`APPLY PATCHES`. These reach the engine as `MutationCommand`s and never traverse the `AlterCommand` conversion path.
+- Lightweight `DELETE FROM ... WHERE ...` and standalone `UPDATE ... SET ... WHERE ...`.
+- Partition manipulation (`ATTACH`/`DETACH`/`DROP`/`MOVE PARTITION`), `TRUNCATE`, and `SYSTEM ...` statements.
+- `MODIFY COLUMN` type changes that are metadata-only per `isMetadataOnlyConversion` (e.g. compatible Enum widening) — correctly, since no data is rewritten.
+- `DROP COLUMN` of a `MATERIALIZED` or `ALIAS` column — metadata-only, not a mutation.
+
+For stricter guardrails combine this with the server-level `disable_insertion_and_mutation` setting and RBAC on `ALTER`/`INSERT` grants.
 )", 0) \
     DECLARE(Bool, enable_global_with_statement, true, R"(
 Propagate WITH statements to UNION queries and all subqueries

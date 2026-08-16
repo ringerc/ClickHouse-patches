@@ -1,0 +1,36 @@
+-- positive: DROP COLUMN (physical)
+-- positive: MODIFY COLUMN (non-metadata type change)
+-- positive: RENAME COLUMN
+-- positive: CLEAR COLUMN IN PARTITION
+-- positive: DROP INDEX
+-- positive: CLEAR INDEX IN PARTITION
+-- positive: DROP PROJECTION
+-- positive: MODIFY TTL (rewrite path)
+-- gap: ALTER TABLE ... UPDATE (explicit heavy mutation)
+ok
+-- gap: ALTER TABLE ... DELETE (explicit heavy mutation)
+ok
+-- gap: MATERIALIZE INDEX
+ok
+-- gap: MATERIALIZE PROJECTION
+ok
+-- gap: MATERIALIZE COLUMN (default backfill)
+ok
+-- gap: MATERIALIZE TTL
+ok
+-- gap: APPLY DELETED MASK
+ok
+-- gap: DROP COLUMN of MATERIALIZED column (metadata-only, not blocked)
+ok
+-- gap: DROP COLUMN of ALIAS column (metadata-only, not blocked)
+ok
+-- gap: lightweight DELETE FROM ... WHERE
+ok
+-- gap: lightweight UPDATE ... SET ... WHERE
+ok
+-- happy: ADD COLUMN with constant DEFAULT (metadata-only)
+ok
+-- happy: MODIFY COLUMN with metadata-only Enum widening
+ok
+-- happy: COMMENT COLUMN
+ok
