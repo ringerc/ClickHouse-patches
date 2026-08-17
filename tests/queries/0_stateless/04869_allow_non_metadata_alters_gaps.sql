@@ -140,10 +140,14 @@ SET allow_non_metadata_alters = 0;
 
 SELECT '-- gap: lightweight DELETE FROM ... WHERE';
 DELETE FROM ana_gaps WHERE key = 999;
+-- Empirically lightweight DELETE enqueues two `system.mutations` entries here
+-- (the deletion itself plus a follow-up); pin the observed count.
 SELECT 'mutations:', count() FROM system.mutations WHERE database = currentDatabase() AND table = 'ana_gaps';
 
 SELECT '-- gap: lightweight UPDATE ... SET ... WHERE';
 UPDATE ana_gaps SET v_num = 7 WHERE key = 1;
+-- Empirically lightweight UPDATE does NOT go through `system.mutations` — it
+-- routes only through patch parts. Count stays unchanged.
 SELECT 'mutations:', count() FROM system.mutations WHERE database = currentDatabase() AND table = 'ana_gaps';
 
 

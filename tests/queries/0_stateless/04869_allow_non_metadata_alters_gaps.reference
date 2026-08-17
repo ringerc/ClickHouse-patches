@@ -24,7 +24,7 @@ mutations:	7
 -- gap: DROP COLUMN of ALIAS column (metadata-only, not blocked, does not enqueue a mutation)
 mutations:	7
 -- gap: lightweight DELETE FROM ... WHERE
-mutations:	8
+mutations:	9
 -- gap: lightweight UPDATE ... SET ... WHERE
 mutations:	9
 -- happy: ADD COLUMN with constant DEFAULT (metadata-only)
