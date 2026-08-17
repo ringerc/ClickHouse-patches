@@ -1,0 +1,83 @@
+name: Gaps tests (minimal, GitHub-hosted)
+
+# Minimal, GitHub-hosted CI to exercise ONLY the two new stateless tests
+# added by this branch:
+#   - tests/queries/0_stateless/04869_allow_non_metadata_alters_gaps.sql
+#   - tests/queries/0_stateless/04870_allow_non_metadata_alters_engines.sh
+# and the regression it extends:
+#   - tests/queries/0_stateless/01413_allow_non_metadata_alters.sql
+#
+# This is not the ClickHouse praktika PR pipeline. It runs a released
+# clickhouse binary against the tests as text — it does NOT build this branch
+# and therefore does not exercise the src/Core/Settings.cpp docstring change.
+# See the "Why no CI ran" comment on the PR for the full rationale.
+
+on:
+  push:
+    branches:
+      - test-allow-non-metadata-alters-gaps
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'tests/queries/0_stateless/04869_allow_non_metadata_alters_gaps.*'
+      - 'tests/queries/0_stateless/04870_allow_non_metadata_alters_engines.*'
+      - '.github/workflows/gaps-tests-minimal.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: gaps-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stateless-subset:
+    name: allow_non_metadata_alters stateless subset
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Install released clickhouse binary
+        run: |
+          set -euo pipefail
+          curl -fsSL https://clickhouse.com/ | sh
+          sudo ./clickhouse install --noninteractive
+          clickhouse-server --version
+          clickhouse-client --version
+
+      - name: Start clickhouse-server
+        run: |
+          set -euo pipefail
+          sudo systemctl start clickhouse-server || sudo clickhouse start
+          for i in $(seq 1 30); do
+            if clickhouse-client --query "SELECT 1" >/dev/null 2>&1; then
+              echo "server is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "server did not become ready" >&2
+          sudo journalctl -u clickhouse-server --no-pager | tail -100 || true
+          sudo cat /var/log/clickhouse-server/clickhouse-server.err.log 2>/dev/null | tail -100 || true
+          exit 1
+
+      - name: Run only the targeted tests
+        run: |
+          set -euo pipefail
+          # The runner needs to find `clickhouse` on PATH; the install step
+          # provides it.
+          python3 tests/clickhouse-test \
+            --binary $(which clickhouse) \
+            --no-random-settings \
+            --no-random-merge-tree-settings \
+            --queries tests/queries \
+            01413_allow_non_metadata_alters \
+            04869_allow_non_metadata_alters_gaps \
+            04870_allow_non_metadata_alters_engines
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          sudo cat /var/log/clickhouse-server/clickhouse-server.log 2>/dev/null | tail -300 || true
+          sudo cat /var/log/clickhouse-server/clickhouse-server.err.log 2>/dev/null | tail -300 || true
