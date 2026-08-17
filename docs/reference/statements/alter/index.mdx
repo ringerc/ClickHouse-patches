@@ -65,6 +65,17 @@ A mutation query returns immediately after the mutation entry is added (in case 
 
 Entries for finished mutations are not deleted right away (the number of preserved entries is determined by the `finished_mutations_to_keep` storage engine parameter). Older mutation entries are deleted.
 
+### Limitations of `allow_non_metadata_alters` {#limitations-of-allow-non-metadata-alters}
+
+The session setting [`allow_non_metadata_alters`](/reference/settings/session-settings/allow#allow_non_metadata_alters), when set to `0`, refuses `ALTER` statements that would rewrite data on disk. It is one layer of defense, not a full mutation guard — its scope is narrower than the name suggests:
+
+- Only enforced for `MergeTree`-family engines. Other engines bypass the check entirely.
+- Only fires for `ALTER` commands that convert to mutations via `AlterCommands::getMutationCommands`. Statements that reach the engine as explicit `MutationCommand`s are not refused: `ALTER TABLE ... UPDATE`, `ALTER TABLE ... DELETE`, `ALTER TABLE ... MATERIALIZE INDEX`/`PROJECTION`/`COLUMN`/`STATISTICS`/`TTL`, `ALTER TABLE ... APPLY DELETED MASK`, `ALTER TABLE ... APPLY PATCHES`.
+- Lightweight `DELETE FROM ... WHERE ...` and standalone `UPDATE ... SET ... WHERE ...` are not refused either.
+- Partition manipulation (`ATTACH`/`DETACH`/`DROP`/`MOVE PARTITION`), `TRUNCATE`, and `SYSTEM ...` are not refused.
+
+For stricter guardrails combine this with the server-level `disable_insertion_and_mutation` setting and RBAC on `ALTER`/`INSERT` grants. See `tests/queries/0_stateless/01413_allow_non_metadata_alters.sql` and `tests/queries/0_stateless/04869_allow_non_metadata_alters_gaps.sql` for the pinned behavior.
+
 ## Synchronicity of ALTER Queries {#synchronicity-of-alter-queries}
 
 For non-replicated tables, all `ALTER` queries are performed synchronously. For replicated tables, the query just adds instructions for the appropriate actions to `ZooKeeper`, and the actions themselves are performed as soon as possible. However, the query can wait for these actions to be completed on all the replicas.
